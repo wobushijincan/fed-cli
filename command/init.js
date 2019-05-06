@@ -1,0 +1,60 @@
+'use strict'
+const exec = require('child_process').exec
+const co = require('co')
+const prompt = require('co-prompt')
+const config = require('../templates')
+const chalk = require('chalk')
+const download = require('download-git-repo')
+const fs = require('fs')
+
+module.exports = () => {
+ co(function *() {
+    // 处理用户输入
+      let tplName = yield prompt('Template name: ')
+      let projectName = yield prompt('Project name: ')
+      let gitUrl
+      let branch
+
+    if (!config.tpl[tplName]) {
+        console.log(chalk.red('\n × Template does not exit!'))
+        process.exit()
+    }
+    if(fs.existsSync(projectName)) {
+      console.log(chalk.red('\n × Fail! project has exit!'))
+      process.exit()
+    }
+    gitUrl = config.tpl[tplName].url
+    branch = config.tpl[tplName].branch
+    // 简单判断是否是仓库短链
+    console.log(gitUrl.indexOf('github.com'))
+    if(gitUrl.indexOf('github.com') > 0 && gitUrl.indexOf('.git') > 0) {
+      gitUrl = 'direct:' + gitUrl
+    }
+
+    // git命令，远程拉取项目并自定义项目名
+    // let cmdStr = `git clone ${gitUrl} ${projectName} && cd ${projectName} && git checkout ${branch}`
+
+    console.log(chalk.white('\n Start generating...'))
+
+    // exec(cmdStr, (error, stdout, stderr) => {
+    //   if (error) {
+    //     console.log(error)
+    //     process.exit()
+    //   }
+    //   console.log(chalk.green('\n √ Generation completed!'))
+    //   console.log(`\n cd ${projectName} && npm install \n`)
+    //   process.exit()
+    // })
+    console.log(gitUrl)
+    download(gitUrl, 'demos/' + projectName, function (err) {
+      if (err) {
+        console.log(err)
+        process.exit()
+      }
+      console.log(chalk.green('\n √ Generation completed!'))
+      console.log(`\n cd ${projectName} && npm install \n`)
+      process.exit()
+    })
+
+  })
+}
